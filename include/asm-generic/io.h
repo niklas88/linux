@@ -448,6 +448,7 @@ static inline void writesq(volatile void __iomem *addr, const void *buffer,
 #define IO_SPACE_LIMIT 0xffff
 #endif
 
+#ifdef CONFIG_HAS_IOPORT
 /*
  * {in,out}{b,w,l}() access little endian I/O. {in,out}{b,w,l}_p() can be
  * implemented on hardware that needs an additional delay for I/O accesses to
@@ -522,8 +523,11 @@ static inline void _outl(u32 value, unsigned long addr)
 	__io_paw();
 }
 #endif
+#endif /* CONFIG_HAS_IOPORT */
 
 #include <linux/logic_pio.h>
+
+#ifdef CONFIG_HAS_IOPORT
 
 #ifndef inb
 #define inb _inb
@@ -703,6 +707,7 @@ static inline void outsl_p(unsigned long addr, const void *buffer,
 	outsl(addr, buffer, count);
 }
 #endif
+#endif /* CONFIG_HAS_IOPORT */
 
 #ifndef CONFIG_GENERIC_IOMAP
 #ifndef ioread8
