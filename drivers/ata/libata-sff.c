@@ -3107,6 +3107,7 @@ EXPORT_SYMBOL_GPL(ata_bmdma_port_start32);
 
 #ifdef CONFIG_PCI
 
+#ifdef CONFIG_LEGACY_PCI
 /**
  *	ata_pci_bmdma_clear_simplex -	attempt to kick device out of simplex
  *	@pdev: PCI device
@@ -3132,6 +3133,7 @@ int ata_pci_bmdma_clear_simplex(struct pci_dev *pdev)
 	return 0;
 }
 EXPORT_SYMBOL_GPL(ata_pci_bmdma_clear_simplex);
+#endif
 
 static void ata_bmdma_nodma(struct ata_host *host, const char *reason)
 {
