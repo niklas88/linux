@@ -384,6 +384,7 @@ static void au_serial_dl_write(struct uart_8250_port *up, int value)
 
 #endif
 
+#ifdef CONFIG_HAS_IOPORT
 static unsigned int hub6_serial_in(struct uart_port *p, int offset)
 {
 	offset = offset << p->regshift;
@@ -397,6 +398,7 @@ static void hub6_serial_out(struct uart_port *p, int offset, int value)
 	outb(p->hub6 - 1 + offset, p->iobase);
 	outb(value, p->iobase + 1);
 }
+#endif
 
 static unsigned int mem_serial_in(struct uart_port *p, int offset)
 {
@@ -446,6 +448,7 @@ static unsigned int mem32be_serial_in(struct uart_port *p, int offset)
 	return ioread32be(p->membase + offset);
 }
 
+#ifdef CONFIG_HAS_IOPORT
 static unsigned int io_serial_in(struct uart_port *p, int offset)
 {
 	offset = offset << p->regshift;
@@ -457,6 +460,7 @@ static void io_serial_out(struct uart_port *p, int offset, int value)
 	offset = offset << p->regshift;
 	outb(value, p->iobase + offset);
 }
+#endif
 
 static int serial8250_default_handle_irq(struct uart_port *port);
 
@@ -468,10 +472,12 @@ static void set_io_from_upio(struct uart_port *p)
 	up->dl_write = default_serial_dl_write;
 
 	switch (p->iotype) {
+#ifdef CONFIG_HAS_IOPORT
 	case UPIO_HUB6:
 		p->serial_in = hub6_serial_in;
 		p->serial_out = hub6_serial_out;
 		break;
+#endif
 
 	case UPIO_MEM:
 		p->serial_in = mem_serial_in;
@@ -502,10 +508,12 @@ static void set_io_from_upio(struct uart_port *p)
 		break;
 #endif
 
+#ifdef CONFIG_HAS_IOPORT
 	default:
 		p->serial_in = io_serial_in;
 		p->serial_out = io_serial_out;
 		break;
+#endif
 	}
 	/* Remember loaded iotype */
 	up->cur_iotype = p->iotype;
@@ -1377,10 +1385,12 @@ static void autoconfig_irq(struct uart_8250_port *up)
 {
 	struct uart_port *port = &up->port;
 	unsigned char save_mcr, save_ier;
-	unsigned char save_ICP = 0;
-	unsigned int ICP = 0;
 	unsigned long irqs;
 	int irq;
+
+#ifdef CONFIG_HAS_IOPORT
+	unsigned char save_ICP = 0;
+	unsigned int ICP = 0;
 
 	if (port->flags & UPF_FOURPORT) {
 		ICP = (port->iobase & 0xfe0) | 0x1f;
@@ -1388,6 +1398,7 @@ static void autoconfig_irq(struct uart_8250_port *up)
 		outb_p(0x80, ICP);
 		inb_p(ICP);
 	}
+#endif
 
 	if (uart_console(port))
 		console_lock();
@@ -1419,8 +1430,10 @@ static void autoconfig_irq(struct uart_8250_port *up)
 	serial8250_out_MCR(up, save_mcr);
 	serial_out(up, UART_IER, save_ier);
 
+#ifdef CONFIG_HAS_IOPORT
 	if (port->flags & UPF_FOURPORT)
 		outb_p(save_ICP, ICP);
+#endif
 
 	if (uart_console(port))
 		console_unlock();
@@ -2414,6 +2427,7 @@ dont_test_tx_en:
 	 */
 	up->ier = UART_IER_RLSI | UART_IER_RDI;
 
+#ifdef CONFIG_HAS_IOPORT
 	if (port->flags & UPF_FOURPORT) {
 		unsigned int icp;
 		/*
@@ -2423,6 +2437,7 @@ dont_test_tx_en:
 		outb_p(0x80, icp);
 		inb_p(icp);
 	}
+#endif
 	retval = 0;
 out:
 	serial8250_rpm_put(up);
@@ -2457,13 +2472,16 @@ void serial8250_do_shutdown(struct uart_port *port)
 		serial8250_release_dma(up);
 
 	spin_lock_irqsave(&port->lock, flags);
+#ifdef CONFIG_HAS_IOPORT
 	if (port->flags & UPF_FOURPORT) {
 		/* reset interrupts on the AST Fourport board */
 		inb((port->iobase & 0xfe0) | 0x1f);
 		port->mctrl |= TIOCM_OUT1;
 	} else
 		port->mctrl &= ~TIOCM_OUT2;
-
+#else
+	port->mctrl &= ~TIOCM_OUT2;
+#endif
 	serial8250_set_mctrl(port, port->mctrl);
 	spin_unlock_irqrestore(&port->lock, flags);
 
