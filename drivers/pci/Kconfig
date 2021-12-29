@@ -23,6 +23,17 @@ menuconfig PCI
 
 if PCI
 
+config LEGACY_PCI
+	bool "Enable support for legacy PCI devices"
+	depends on HAS_IOPORT
+	help
+	   This option enables support for legacy PCI devices. This includes
+	   PCI devices attached directly or via a bridge on a PCI Express bus.
+	   It also includes compatibility features on PCI Express devices which
+	   make use of legacy I/O spaces.
+
+	   For maximum compatibility with old hardware say 'Y'
+
 config PCI_DOMAINS
 	bool
 	depends on PCI
